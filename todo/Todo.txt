@@ -1,0 +1,5 @@
+Next:
+
+ - Density phase space Single plot and 4 Plot
+ - check mean/median
+ 
