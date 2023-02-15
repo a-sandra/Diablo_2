@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 import time
 
 
-# This class
+# Class Beam 
+## 10/02/2023: I added an argument in the constructor, the input beam distrubution. 
 class Beam(object):
-    def __init__(self, type_particle="PROTON"):
+    def __init__(self, distribution_file_name="", type_particle="PROTON" ):
 
         # A particle type
         if type_particle == "ELECTRON":
@@ -19,18 +20,23 @@ class Beam(object):
             self.E_0 = scipy.constants.physical_constants["proton mass energy equivalent in MeV"][0]
             self.q = 1.0
 
-        self.__E_total = 0
-        self.__p = 0
-        self.distribution = []
-        self.n_particle = 0
-        self._p_mom_av = 0
-        self._e_total_av = 0
-        self.ptc_input_distribution = []
-        self.ptc_input_distribution_cut = []
-        self.t = 0
-        self.E_ptc = 0
-        self.ptc_coordinates = []
-        self.travel_distribution = []
+        # 10/02/2023 I added a condition: if the input file is empty, then a message notifying the user is printing. 
+        ## if the file is giving, then the method self.read_distribution is used.
+        if not distribution_file_name: 
+            self.distribution = []
+            self.n_particle = 0
+            self._p_mom_av = 0
+            self._e_total_av = 0
+            self.ptc_input_distribution = []
+            self.ptc_input_distribution_cut = [] # ?
+            self.t = 0
+            self.E_ptc = 0
+            self.ptc_coordinates = []
+            self.travel_distribution = []
+            print("beam created without any input beam distribution. Use read_distribution(filename) et voila")
+        else: 
+            self.read_distribution(distribution_file_name)
+            
 
     @property
     def p_mom_av(self):
@@ -56,7 +62,9 @@ class Beam(object):
 
     # This method reads a beam distribution with a standard format ["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Z(mm)", "W(MeV)"] in mm, mrad, MeV
     def read_distribution(self, filename):
+        print("Hello")
         try:
+            print("je suis la")
             lheader = ["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Z(mm)", "W(MeV)"]
             self.distribution = pd.read_csv(filename, delim_whitespace=True, skiprows=1, names=lheader)
             self.x = self.distribution["X(mm)"]
@@ -81,7 +89,7 @@ class Beam(object):
         except IOError:
             print("Ooops, the file is not found ¯\_(ツ)_/¯")
         finally:
-            pass#print("Yop")
+            pass
 
     def get_distribution(self, df):
         self.distribution = df

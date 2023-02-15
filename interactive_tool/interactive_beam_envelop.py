@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,6 +21,7 @@ from matplotlib.widgets import Slider, Button
 class Interactive(object):
     def __init__(self,  file_input_distribution, input_lattice, lattice = "H01"):
         
+        # Initialisation EMQs
         self.bm = 0
         self._k1q11 = 0.0
         self._k1q12 = 5.0
@@ -81,6 +80,8 @@ class Interactive(object):
 
             self.start_std_x = np.std(hor_distribution["X(mm)"])
             self.start_std_y = np.std(vert_distribution["Y(mm)"])
+            self.start_position_x = np.mean(hor_distribution["X(mm)"])
+            self.start_position_y = np.mean(vert_distribution["Y(mm)"])
             
         else:
             pass
@@ -199,6 +200,10 @@ class Interactive(object):
                             [self.s_q2, np.std(mid_hor_q2[0,:])],[self.s_q3, np.std(mid_hor_q3[0,:])], 
                             [self.s_q4, np.std(mid_hor_q4[0,:])],[self.s_q5, np.std(mid_hor_q5[0,:])]])
         
+        self.position_x = np.array([[0, self.start_position_x],[self.s_q1, np.mean(mid_hor_q1[0,:])],
+                            [self.s_q2, np.mean(mid_hor_q2[0,:])],[self.s_q3, np.mean(mid_hor_q3[0,:])], 
+                            [self.s_q4, np.mean(mid_hor_q4[0,:])],[self.s_q5, np.mean(mid_hor_q5[0,:])]])
+        
     def quadrupoleMatrix(self, k1, length):
         if k1>= 0 :
             return opu.mqf(k1, length)
@@ -219,10 +224,18 @@ class Interactive(object):
         self.sy = np.array([[0, self.start_std_y],[self.s_q1, np.std(mid_vert_q1[0,:])],
                             [self.s_q2, np.std(mid_vert_q2[0,:])],[self.s_q3,np.std(mid_vert_q3[0,:])], 
                             [self.s_q4, np.std(mid_vert_q4[0,:])],[self.s_q5, np.std(mid_vert_q5[0,:])]])
+        
+        self.position_y = np.array([[0, self.start_position_y],[self.s_q1, np.mean(mid_vert_q1[0,:])],
+                            [self.s_q2, np.mean(mid_vert_q2[0,:])],[self.s_q3,np.mean(mid_vert_q3[0,:])], 
+                            [self.s_q4, np.mean(mid_vert_q4[0,:])],[self.s_q5, np.mean(mid_vert_q5[0,:])]])
+        
+        
     
     def sigmaIntoDataframe(self):
         self.sigma = pd.DataFrame(data = {"S": self.sx[:,0], "SIGMA_X": self.sx[:,1], "SIGMA_Y": self.sy[:,1]})
 
+    def positionIntoDataframe(self):
+        self.position = pd.DataFrame(data = {"S": self.position_x[:,0], "X": self.position_x[:,1], "Y": self.position_y[:,1]})
 
     def plotSimple(self):
         optics_file = "aperture_H01.twiss"
@@ -316,9 +329,12 @@ class Interactive(object):
         
         ax2.plot(self.sigma["S"], 3.0*self.sigma["SIGMA_X"]*1000, "-ro", label = "X")
         ax2.plot(self.sigma["S"], -3.0*self.sigma["SIGMA_X"]*1000, "-ro")
+        ax2.plot(self.position["S"], -3.0*self.position["X"]*1000, "-go")
+        
         
         ax4.plot(self.sigma["S"], 3.0*self.sigma["SIGMA_Y"]*1000, "-bo", label = "Y")
         ax4.plot(self.sigma["S"], -3.0*self.sigma["SIGMA_Y"]*1000, "-bo")
+        ax4.plot(self.position["S"], -3.0*self.position["Y"]*1000, "-go")
         
         ax5.scatter(self.fsm_hor[0,:]*1000, self.fsm_hor[1,:]*1000,label = "Hor. H01-FSM-001")
         ax5.scatter(self.fsm_ver[0,:]*1000, self.fsm_ver[1,:]*1000, label = "Vert. H01-FSM-001")
@@ -345,6 +361,7 @@ class Interactive(object):
         self.computeHorizontalOptics()
         self.computeVerticalOptics()
         self.sigmaIntoDataframe()
+        self.positionIntoDataframe()
         self.plotSimple()
 
         

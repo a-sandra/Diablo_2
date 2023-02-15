@@ -17,13 +17,13 @@ plt.matplotlib.rc('font', **font)
 import scipy.constants
 E_0 = scipy.constants.physical_constants["proton mass energy equivalent in MeV"][0]*0.001 # (938.2720813, 'MeV', 5.8e-06) in GeV
 
-sys.path.append("/Users/pickle/Documents/Diablo_2/")
+sys.path.append("/home/s.aumon/Python_Packages/Diablo_2/")
 from beam import beam
 import madx_utils.madx_utils as mxu
 
 import interactive_beam_envelop as ibe
 
-distribution_file = "/Users/pickle/ADAM/L-HEBT/L-HEBT_Matching/13MKS_Phase_Offset/CCL_Output_71.7.dat"
+distribution_file = "/home/s.aumon/Python_Packages/Python_Dev/interactive_tool/CCL_Output_71.7.dat"
 lattice_file = "lattice_example/optics_71.7_MeV.twiss"
 
 interactive_plot = ibe.Interactive(distribution_file, lattice_file, "H01")
