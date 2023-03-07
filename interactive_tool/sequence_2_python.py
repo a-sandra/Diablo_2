@@ -10,14 +10,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys, re
 
-sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
+sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
 #sys.path.append("/home/s.aumon/Python_Packages/Diablo_2/")
 from beam import beam
 import madx_utils.madx_utils as mxu
 import optics_utils.transfer_matrices as opu
 
 class Beamline(object):
-    def __init__(self, sequence_file={}, kin_energy = 70.0):
+    def __init__(self, sequence_file={}, input_beam =[], kin_energy = 70.0):
         self.kinetic_energy = kin_energy
         self.brho = 0
         self.mass = 0
@@ -27,6 +27,7 @@ class Beamline(object):
         self.sbend_list = []
         self.steerer_list = []
         self.non_magnetic_element = []
+        self.input_file_distribution = input_beam
 
         # check if an input file is given.
         # this part should just build the beam line.
@@ -35,6 +36,7 @@ class Beamline(object):
             self.build_beamline_from_sequence_file(self.sequence_file)
         else:
             print("No Twiss file has been provided, the beam line is empty")
+        #
 
     # get the kinetic energy of the beam
     def get_kinetic_energy(self):
@@ -63,18 +65,49 @@ class Beamline(object):
 
             #check element by element, in order to build a dataframe with NAME, KEYWORD, etc.. And Transfer matrix.
             self.main_dataframe_sequence = pd.DataFrame({"NAME": pd.Series(dtype="str"), "KEYWORD": pd.Series(dtype="str"), "S": pd.Series(dtype="float"),
-                                                        "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"), "ANGLE": pd.Series(dtype="float"),
+                                                        "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"),
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
             self.data = []
-            #for index in np.arange(len(self.dataframe_madx_sequence)):
-            #    self.check_element_type(self.dataframe_madx_sequence.iloc[index])
-    
-    def build_beamline_transfer_matrix(self):
-        self.full_transfert_matrice = []
-        for index in range(1, len(self.full_transfert_matrice)):
-            ftm = self.full_transfert_matrice[index].dot(self.full_transfert_matrice[index-1])
-        return ftm
+            for index in np.arange(len(self.dataframe_madx_sequence)):
+                self.check_element_type(self.dataframe_madx_sequence.iloc[index])
+            self.main_dataframe_sequence = pd.DataFrame(self.data, columns=["NAME", "KEYWORD", "S","L", "K1","TRANSFER_MATRIX"])
+            # Building the transfer matrices as array as function of s.
+            self.tm_as_function_s_array = np.asarray(self.build_beamline_transfer_matrix(), dtype=object)
+            #Tracking of the given beam distribution
+            #print(self.tm_as_function_s_array[:,1])
+            #self.track()
 
+    def track(self):
+        if not self.input_file_distribution:
+            print("No input beam distribution")
+        else:
+            print("beam distribution file given"+ " "+self.input_file_distribution)
+            my_beam = beam.Beam()
+            my_beam.read_distribution(self.input_file_distribution)
+            initiate_tracking = self.tm_as_function_s_array[0,1].dot(0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)"]]))
+            print(len(np.transpose(initiate_tracking)))
+            #plt.scatter(initiate_tracking[0], initiate_tracking[1])
+            plt.scatter(0.001*my_beam.distribution["X(mm)"],0.001*my_beam.distribution[ "XP(mrad)"])
+            track_as_function_s_temp = []
+            for index in np.arange(1, len(self.tm_as_function_s_array)):
+                temp = self.tm_as_function_s_array[index,1].dot(initiate_tracking)
+                initiate_tracking = temp
+                track_as_function_s_temp.append(initiate_tracking)
+            #print(track_as_function_s_temp[-1][1])
+            #plt.scatter(track_as_function_s_temp[-1][1][0], track_as_function_s_temp[-1][1][1])
+            #plt.show()
+            
+ 
+    def build_beamline_transfer_matrix(self):
+        # tm stands for transfer matrix
+        tm_as_function_s_temp = []
+        start_to_end_transfert_matrice = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[0]
+        for index in np.arange(1, len(self.main_dataframe_sequence)): #
+            temp = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[index].dot(start_to_end_transfert_matrice)
+            start_to_end_transfert_matrice = temp
+            tm_as_function_s_temp.append(start_to_end_transfert_matrice)
+        return tm_as_function_s_temp
+        
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a quad") 
@@ -83,30 +116,30 @@ class Beamline(object):
             if (element["K1L"]>=0):
                 k1 = element["K1L"]/element["L"]
                 self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"]/element["L"], 
-                                element["ANGLE"], opu.mqf(k1, element["L"])])
+                                opu.mqf(k1, element["L"])])
             else:
                 k1 = element["K1L"]/element["L"]
                 self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"]/element["L"], 
-                                element["ANGLE"], opu.mqd(k1, element["L"])])
+                                opu.mqd(k1, element["L"])])
 
 
         elif element["KEYWORD"]=="SBEND":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is sbend")
             sbend = Dipole(self, element["L"], 0.785398, element["NAME"])
             self.sbend_list.append(sbend)
-            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], element["ANGLE"], opu.md(element["L"])])
+            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
         elif element["KEYWORD"]=="DRIFT":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a drift")
             drift = Drift(self,  element["L"], element["NAME"])
             self.non_magnetic_element.append(drift)
-            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], element["ANGLE"], opu.md(element["L"])])
+            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
         elif element["KEYWORD"]=="INSTRUMENT":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is an instrument, a drift")
             drift =Drift(self,  element["L"], element["NAME"])
             self.non_magnetic_element.append(drift)
-            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], element["ANGLE"], opu.md(element["L"])])
+            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
         elif element["KEYWORD"]=="MARKER":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a MARKER, a drift")
@@ -116,13 +149,13 @@ class Beamline(object):
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a monitor, a drift")
             drift = Drift(self,  element["L"], element["NAME"])
             self.non_magnetic_element.append(drift)
-            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], element["ANGLE"], opu.md(element["L"])])
+            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
         elif element["KEYWORD"]=="KICKER": # let's consider the kicker as a drift at the moment
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a steerer")
             steerer = Drift(self,  element["L"], element["NAME"])
             self.steerer_list.append(steerer)
-            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], element["ANGLE"], opu.md(element["L"])])
+            self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
     def update_magnet_parameter(self, keyword, list_of_magnet_to_update, keyword_parameter_to_update, parameter_to_update):
         dataframe_as_keyword = self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]==keyword]
@@ -131,17 +164,6 @@ class Beamline(object):
             index_magnet = self.dataframe_madx_sequence[self.dataframe_madx_sequence['NAME']==magnet].index.values.astype(int)[0]
             self.dataframe_madx_sequence.at[index_magnet, keyword_parameter_to_update] = field
         #print(self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]==keyword])
-
-"""
-print(df_optics[df_optics["KEYWORD"]=="QUADRUPOLE"])
-
-for quadrupole_name, strength in zip(updated_HEBT_quadrupole, updated_strength):
-    index_quadrupole = df_optics[df_optics['NAME']==quadrupole_name].index.values.astype(int)[0]
-    df_optics.at[index_quadrupole, "K1L"] = strength
-
-print(df_optics[df_optics["KEYWORD"]=="QUADRUPOLE"])
-
-"""
 
 class Quadrupole(object):
     def __init__(self, beamline, k1l, name = "noname_quadrupole", magnetic_length = 1): # MADX gives K1L, strength*length, thus it has to be converted into strength, gradient
