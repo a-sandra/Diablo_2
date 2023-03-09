@@ -18,6 +18,12 @@ input_distribution = "distribution_example/CCL_Output_71.7.dat"
 
 # test with the sequence file
 bl_with_input = seq.Beamline(lattice_file, input_distribution)
+print(bl_with_input.df_beam_size_along_s)
+
+plt.plot(bl_with_input.df_beam_size_along_s["S"], bl_with_input.df_beam_size_along_s["X"], "o")
+plt.plot(df_optics["S"], df_optics["SIGMA_X"], "o")
+plt.show()
+#print(len(bl_with_input.main_dataframe_sequence))
 
 #print(bl_with_input.data)
 #print(bl_with_input.main_dataframe_sequence["TRANSFER_MATRIX"])

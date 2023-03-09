@@ -28,6 +28,7 @@ class Beamline(object):
         self.steerer_list = []
         self.non_magnetic_element = []
         self.input_file_distribution = input_beam
+        self.test = []
 
         # check if an input file is given.
         # this part should just build the beam line.
@@ -68,46 +69,44 @@ class Beamline(object):
                                                         "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"),
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
             self.data = []
+            self.df_beam_size_along_s = []
             for index in np.arange(len(self.dataframe_madx_sequence)):
                 self.check_element_type(self.dataframe_madx_sequence.iloc[index])
             self.main_dataframe_sequence = pd.DataFrame(self.data, columns=["NAME", "KEYWORD", "S","L", "K1","TRANSFER_MATRIX"])
             # Building the transfer matrices as array as function of s.
             self.tm_as_function_s_array = np.asarray(self.build_beamline_transfer_matrix(), dtype=object)
-            #Tracking of the given beam distribution
-            #print(self.tm_as_function_s_array[:,1])
-            #self.track()
+            self.beam_distribution_at_every_element = self.cumulative_tracking()
 
-    def track(self):
+    def build_beamline_transfer_matrix(self):
+        # tm stands for transfer matrix
+        tm_as_function_s_temp = np.zeros((len(self.main_dataframe_sequence),2,2))
+        tm_as_function_s_temp[0] = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[0]
+
+        for index in np.arange(0, len(self.main_dataframe_sequence)-1):
+            tm_as_function_s_temp[index + 1] = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[index+1].dot(tm_as_function_s_temp[index])
+        return tm_as_function_s_temp
+
+    def cumulative_tracking(self):
         if not self.input_file_distribution:
             print("No input beam distribution")
         else:
             print("beam distribution file given"+ " "+self.input_file_distribution)
             my_beam = beam.Beam()
             my_beam.read_distribution(self.input_file_distribution)
-            initiate_tracking = self.tm_as_function_s_array[0,1].dot(0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)"]]))
-            print(len(np.transpose(initiate_tracking)))
-            #plt.scatter(initiate_tracking[0], initiate_tracking[1])
-            plt.scatter(0.001*my_beam.distribution["X(mm)"],0.001*my_beam.distribution[ "XP(mrad)"])
-            track_as_function_s_temp = []
-            for index in np.arange(1, len(self.tm_as_function_s_array)):
-                temp = self.tm_as_function_s_array[index,1].dot(initiate_tracking)
-                initiate_tracking = temp
-                track_as_function_s_temp.append(initiate_tracking)
-            #print(track_as_function_s_temp[-1][1])
-            #plt.scatter(track_as_function_s_temp[-1][1][0], track_as_function_s_temp[-1][1][1])
-            #plt.show()
-            
- 
-    def build_beamline_transfer_matrix(self):
-        # tm stands for transfer matrix
-        tm_as_function_s_temp = []
-        start_to_end_transfert_matrice = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[0]
-        for index in np.arange(1, len(self.main_dataframe_sequence)): #
-            temp = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[index].dot(start_to_end_transfert_matrice)
-            start_to_end_transfert_matrice = temp
-            tm_as_function_s_temp.append(start_to_end_transfert_matrice)
-        return tm_as_function_s_temp
-        
+            my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)"]].to_numpy())
+            number_particle = len(my_beam.distribution["X(mm)"])
+            df = my_beam.distribution[["X(mm)", "XP(mrad)"]]*0.001
+
+            track_particle = np.zeros((len(self.main_dataframe_sequence),2, number_particle))
+            beam_size_along_s = np.zeros((len(self.dataframe_madx_sequence), 3))
+            track_particle[0] = self.tm_as_function_s_array[0].dot(my_distr)
+            beam_size_along_s[0] = [self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]),np.std(my_distr[1]) ]
+            for index in np.arange(0, len(self.main_dataframe_sequence)-1):
+                track_particle[index+1] = self.tm_as_function_s_array[index+1].dot(my_distr)
+                beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]) ]
+            self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP"])
+            return track_particle
+    
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a quad") 
@@ -121,7 +120,6 @@ class Beamline(object):
                 k1 = element["K1L"]/element["L"]
                 self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"]/element["L"], 
                                 opu.mqd(k1, element["L"])])
-
 
         elif element["KEYWORD"]=="SBEND":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is sbend")
@@ -164,6 +162,12 @@ class Beamline(object):
             index_magnet = self.dataframe_madx_sequence[self.dataframe_madx_sequence['NAME']==magnet].index.values.astype(int)[0]
             self.dataframe_madx_sequence.at[index_magnet, keyword_parameter_to_update] = field
         #print(self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]==keyword])
+
+    def plot_beam_size(self, df):
+        plt.plot(df["S"], df["X"], "o")
+        plt.xlabel("S(m)")
+        plt.xlabel("X(mm)")
+        plt.show()
 
 class Quadrupole(object):
     def __init__(self, beamline, k1l, name = "noname_quadrupole", magnetic_length = 1): # MADX gives K1L, strength*length, thus it has to be converted into strength, gradient
