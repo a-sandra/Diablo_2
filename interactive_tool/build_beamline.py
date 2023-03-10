@@ -204,22 +204,4 @@ class Steerer(object):
     def __init__(self, beamline, name = "noname_steerer", st_length = 1):
         self.steerer_length = st_length
         self.steerer_name = name
-        self.drift_transfert_matrix = np.array([[1.0, 0.0], [0, dr_length]])
-
-
-
-
-    
-    
-    
-    
-    
-
-
-        
-
-
-        
-        
-        
-        
+        self.drift_transfert_matrix = np.array([[1.0, 0.0], [0, dr_length]])       
