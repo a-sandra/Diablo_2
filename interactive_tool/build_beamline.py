@@ -163,12 +163,6 @@ class Beamline(object):
             self.dataframe_madx_sequence.at[index_magnet, keyword_parameter_to_update] = field
         #print(self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]==keyword])
 
-    def plot_beam_size(self, df):
-        plt.plot(df["S"], df["X"], "o")
-        plt.xlabel("S(m)")
-        plt.xlabel("X(mm)")
-        plt.show()
-
 class Quadrupole(object):
     def __init__(self, beamline, k1l, name = "noname_quadrupole", magnetic_length = 1): # MADX gives K1L, strength*length, thus it has to be converted into strength, gradient
         self.beamline = beamline
@@ -178,8 +172,6 @@ class Quadrupole(object):
         self.integrated_strength = k1l
         self.quadrupole_strength = k1l/magnetic_length
         self.gradient = self.quadrupole_strength*beamline.brho
-
-# def mq(k1x, length), strength, length
 
     def quadrupole_transfer_matrix(self):
         if self.quadrupole_strength >= 0 :
