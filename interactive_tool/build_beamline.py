@@ -8,13 +8,14 @@ Created on Tue Jan 17 11:48:20 2023
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import sys, re
+import sys, re, copy
 
-sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
-#sys.path.append("/home/s.aumon/Python_Packages/Diablo_2/")
+#sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
+sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
 from beam import beam
 import madx_utils.madx_utils as mxu
 import optics_utils.transfer_matrices as opu
+from matplotlib.patches import Rectangle
 
 class Beamline(object):
     def __init__(self, sequence_file={}, input_beam =[], kin_energy = 70.0):
@@ -42,6 +43,9 @@ class Beamline(object):
     # get the kinetic energy of the beam
     def get_kinetic_energy(self):
         return self.kinetic_energy
+    
+    def get_refer_s(self, refer = "CENTER"):
+        self.refer_s = refer
     
     # this method is meant to build the beam line from the sequence file
     def build_beamline_from_sequence_file(self, sequence_file = ""):
@@ -162,6 +166,92 @@ class Beamline(object):
             index_magnet = self.dataframe_madx_sequence[self.dataframe_madx_sequence['NAME']==magnet].index.values.astype(int)[0]
             self.dataframe_madx_sequence.at[index_magnet, keyword_parameter_to_update] = field
         #print(self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]==keyword])
+
+    def apertureplot(self):
+
+        s = self.dataframe_madx_sequence["S"]-self.dataframe_madx_sequence["L"]/2
+        aperture_x = 1000*self.dataframe_madx_sequence["APER_1"].replace(0, 0.016)
+        aperture_y = 1000*self.dataframe_madx_sequence["APER_2"].replace(0, 0.016)
+        maximum_s = max(self.dataframe_madx_sequence["S"])
+        df_emq = self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"]
+        df_stm = self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"]=="KICKER"]
+        df_bpm = self.dataframe_madx_sequence[self.dataframe_madx_sequence["NAME"].str.contains(r"BPM")] #BPM
+        df_bend = self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"].str.contains(r"RBEND")] # 
+        df_fsm = self.dataframe_madx_sequence[self.dataframe_madx_sequence["NAME"].str.contains(r"FSM")]
+
+        list_emq = [Rectangle(( df_emq["S"][i]-df_emq["L"][i]/2, -0.2/2),df_emq["L"][i], 0.2,color ='skyblue') for i in df_emq.index]
+        list_stm = [Rectangle(( df_stm["S"][i]-df_stm["L"][i]/2, -0.2/2),df_stm["L"][i], 0.2,color ='limegreen') for i in df_stm.index]
+        list_bpm = [Rectangle(( df_bpm["S"][i]-df_bpm["L"][i]/2, -0.2/2),df_bpm["L"][i], 0.2,color ='orange') for i in df_bpm.index]
+        list_bend = [Rectangle(( df_bend["S"][i]-df_bend["L"][i]/2, -0.2/2),df_bend["L"][i], 0.2,color ='crimson') for i in df_bend.index]
+        list_fsm = [Rectangle(( df_fsm["S"][i]-df_fsm["L"][i]/2, -0.2/2),df_fsm["L"][i], 0.2,color ='purple') for i in df_fsm.index]
+
+        fi, ((ax1, ax3),(ax2, ax4))= plt.subplots(2, 2, figsize = (20,15), gridspec_kw={'height_ratios':[1,4]})
+        for i in list_emq:
+            nq=copy.copy(i)
+            ax1.add_patch(nq)
+        for i in list_stm:
+            ns=copy.copy(i)
+            ax1.add_patch(ns)
+        for i in list_bpm:
+            nb=copy.copy(i)
+            ax1.add_patch(nb)
+        for i in list_bend:
+            nbend=copy.copy(i)
+            ax1.add_patch(nbend)
+        for i in list_fsm:
+            nfsm=copy.copy(i)
+            ax1.add_patch(nfsm)
+
+        ax1.plot([0, maximum_s],[0,0], "k", linewidth=0.5)
+        ax1.set_ylim(-0.2,0.6)
+        ax1.set_xlim(0,6)
+        ax1.grid()
+        ax1.axes.yaxis.set_visible(False)
+        ax1.axes.xaxis.set_visible(False)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax2.step(s, aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
+        ax2.step(s, -aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
+        ax2.set_xlabel("s(m)")
+        ax2.set_xlim(0,6)
+        ax2.set_ylim(-30,30)
+        ax2.set_ylabel("Horizontal (mm)")
+
+        for i in list_emq:
+            nq=copy.copy(i)
+            ax3.add_patch(nq)
+        for i in list_stm:
+            ns=copy.copy(i)
+            ax3.add_patch(ns)
+        for i in list_bpm:
+            nb=copy.copy(i)
+            ax3.add_patch(nb)
+        for i in list_bend:
+            nbend=copy.copy(i)
+            ax3.add_patch(nbend)
+        for i in list_fsm:
+            nfsm=copy.copy(i)
+            ax3.add_patch(nfsm)
+
+        ax3.plot([0, maximum_s],[0,0], "k", linewidth=0.5)
+        ax3.set_ylim(-0.2,0.6)
+        ax3.grid()
+        ax3.axes.yaxis.set_visible(False)
+        ax3.axes.xaxis.set_visible(False)
+        ax3.spines['top'].set_visible(False)
+        ax3.spines['bottom'].set_visible(False)
+        ax3.spines['left'].set_visible(False)
+        ax3.spines['right'].set_visible(False)
+        ax3.set_xlim(0,6)
+        ax4.step(s, aperture_y, where = 'pre', color = 'k', label = "_nolabel_")
+        ax4.step(s, -aperture_y, where = 'pre', color = 'k', label = "_nolabel_")
+        ax4.set_xlabel("s(m)")
+        ax4.set_xlim(0,6)
+        ax4.set_ylim(-20,20)
+        ax4.set_ylabel("Vertical (mm)")
+        plt.show()
 
 class Quadrupole(object):
     def __init__(self, beamline, k1l, name = "noname_quadrupole", magnetic_length = 1): # MADX gives K1L, strength*length, thus it has to be converted into strength, gradient
