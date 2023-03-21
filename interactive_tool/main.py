@@ -28,11 +28,13 @@ input_distribution = "distribution_example/CCL_Output_71.7.dat"
 bl_with_input = seq.Beamline(lattice_file, input_distribution)
 #print(bl_with_input.df_beam_size_along_s)
 
-#bl_with_input.apertureplot()
+figure, ax1, ax2, ax3, ax4 = bl_with_input.apertureplot()
+ax1.plot(np.arange(10), np.sin(np.arange(10)))
+plt.show()
 
-app = QtWidgets.QApplication(sys.argv)
-w = MainWindow()
-app.exec_()
+#app = QtWidgets.QApplication(sys.argv)
+#w = MainWindow(bl_with_input)
+#app.exec_()
 
 #----------------------------------------------------------------------------------------------------
 #plt.plot(bl_with_input.df_beam_size_along_s["S"], bl_with_input.df_beam_size_along_s["X"], "o")
