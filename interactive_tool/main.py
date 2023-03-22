@@ -9,8 +9,8 @@ from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
-#sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
-sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
+sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
+#sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
 from beam import beam
 import madx_utils.madx_utils as mxu
 import interactive_tool.build_beamline as seq
@@ -29,7 +29,9 @@ bl_with_input = seq.Beamline(lattice_file, input_distribution)
 #print(bl_with_input.df_beam_size_along_s)
 
 figure, ax1, ax2, ax3, ax4 = bl_with_input.apertureplot()
-ax1.plot(np.arange(10), np.sin(np.arange(10)))
+#
+ax2.plot(bl_with_input.df_beam_size_along_s["S"], bl_with_input.df_beam_size_along_s["X"]*1000, "o")
+ax2.plot(bl_with_input.df_beam_size_along_s["S"], -bl_with_input.df_beam_size_along_s["X"]*1000, "o")
 plt.show()
 
 #app = QtWidgets.QApplication(sys.argv)
