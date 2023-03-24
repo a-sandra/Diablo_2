@@ -259,7 +259,7 @@ class Beamline(object):
         ax4.set_xlim(0,6)
         ax4.set_ylim(-20,20)
         ax4.set_ylabel("Vertical (mm)")
-        #plt.show()
+        plt.show()
         return fi,ax1,ax2,ax3,ax4
 
 class Quadrupole(object):
