@@ -35,24 +35,3 @@ window = QtWidgets.QWidget()
 window = MainWindow(bl_with_input)
 window.show()
 app.exec_()
-
-
-
-
-
-
-
-#
-#------------------------------------------------------------------------------------------------------------
-#figure, ax1, ax2, ax3, ax4 = bl_with_input.apertureplot()
-# figure with beam envelop
-#ax2.plot(bl_with_input.df_beam_size_along_s["S"], 3.0*bl_with_input.df_beam_size_along_s["X"]*1000, "ob")
-#ax2.plot(bl_with_input.df_beam_size_along_s["S"], -3.0*bl_with_input.df_beam_size_along_s["X"]*1000, "ob")
-#plt.show()
-
-
-
-#----------------------------------------------------------------------------------------------------
-#plt.plot(bl_with_input.df_beam_size_along_s["S"], bl_with_input.df_beam_size_along_s["X"], "o")
-#plt.plot(df_optics["S"], df_optics["SIGMA_X"], "o")
-#plt.show()
