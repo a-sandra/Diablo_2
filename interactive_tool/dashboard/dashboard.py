@@ -4,21 +4,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
-from pyqtgraph import PlotWidget, plot
-import pyqtgraph as pg
-
-
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, beamline,*args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.setGeometry(100, 100, 680, 500)
-        set.setWindowTitle('L-HEBT envelop')
 
+        self.setGeometry(100, 100, 1000, 700) 
+        self.setWindowTitle('L-HEBT envelop')
+        grid = QtWidgets.QGridLayout()
+        self.setLayout(grid)
+
+        self.sp = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        #self.sp.setGeometry(QtCore.QRect(190, 100, 160, 16))
+        #grid.addWidget(self.sp, 5, 0)
+
+        """
         s = beamline.dataframe_madx_sequence["S"]-beamline.dataframe_madx_sequence["L"]/2
         beamline.aperture_beamline()
         beamline.build_dataframe_element()
@@ -100,3 +104,4 @@ class MainWindow(QtWidgets.QMainWindow):
 
         central_widget = FigureCanvas(fi)
         self.setCentralWidget(central_widget)
+        """
