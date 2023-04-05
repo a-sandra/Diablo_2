@@ -97,6 +97,7 @@ class Beamline(object):
             print("beam distribution file given"+ " "+self.input_file_distribution)
             my_beam = beam.Beam()
             my_beam.read_distribution(self.input_file_distribution)
+            self.bm = my_beam 
             my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)"]].to_numpy())
             number_particle = len(my_beam.distribution["X(mm)"])
             df = my_beam.distribution[["X(mm)", "XP(mrad)"]]*0.001
@@ -110,6 +111,10 @@ class Beamline(object):
                 beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]) ]
             self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP"])
             return track_particle
+    
+    def update(self):
+        #self.update_magnet_parameter
+        return 1
     
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":

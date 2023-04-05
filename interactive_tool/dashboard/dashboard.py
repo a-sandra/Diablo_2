@@ -4,38 +4,74 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
 
-from PyQt5 import QtCore, QtWidgets, Qt
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider
+from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, beamline,*args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
+matplotlib.rcParams.update({'font.size': 9})
 
-        self.setGeometry(100, 100, 1000, 700) 
-        self.setWindowTitle('L-HEBT envelop')
-        grid = QtWidgets.QGridLayout()
-        self.setLayout(grid)
+class MainWindow(QMainWindow):
+    def __init__(self, tranferline,*args, **kwargs):
+        QMainWindow.__init__(self, *args, **kwargs)
+        self.beamline = tranferline
 
-        self.sp = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        #self.sp.setGeometry(QtCore.QRect(190, 100, 160, 16))
-        #grid.addWidget(self.sp, 5, 0)
+        #self.figure = plt.figure()
+        #self.drawing = self.figure.add_subplot(111)
+        #self.canvas = FigureCanvas(self.figure)
+        #self.setCentralWidget(self.canvas)
 
-        """
-        s = beamline.dataframe_madx_sequence["S"]-beamline.dataframe_madx_sequence["L"]/2
-        beamline.aperture_beamline()
-        beamline.build_dataframe_element()
-        self.maximum_s = max(beamline.dataframe_madx_sequence["S"])
+        dock = QDockWidget ("Values")
+        self.addDockWidget (Qt.RightDockWidgetArea, dock)
+        sliders = QWidget ()
+        sliders_grid = QGridLayout (sliders)
 
-        list_emq = [Rectangle(( beamline.df_emq["S"][i]-beamline.df_emq["L"][i]/2, -0.2/2), beamline.df_emq["L"][i], 0.2,color ='skyblue') for i in beamline.df_emq.index]
-        list_stm = [Rectangle(( beamline.df_stm["S"][i]-beamline.df_stm["L"][i]/2, -0.2/2), beamline.df_stm["L"][i], 0.2,color ='limegreen') for i in beamline.df_stm.index]
-        list_bpm = [Rectangle(( beamline.df_bpm["S"][i]-beamline.df_bpm["L"][i]/2, -0.2/2), beamline.df_bpm["L"][i], 0.2,color ='orange') for i in beamline.df_bpm.index]
-        list_bend = [Rectangle(( beamline.df_bend["S"][i]-beamline.df_bend["L"][i]/2, -0.2/2), beamline.df_bend["L"][i], 0.2,color ='crimson') for i in beamline.df_bend.index]
-        list_fsm = [Rectangle(( beamline.df_fsm["S"][i]-beamline.df_fsm["L"][i]/2, -0.2/2), beamline.df_fsm["L"][i], 0.2,color ='purple') for i in beamline.df_fsm.index]
+        def add_slider(foo, col):
+            sld = QSlider(Qt.Vertical, sliders)
+            sld.setFocusPolicy(Qt.NoFocus)
+            sld.valueChanged[int].connect(foo) #When the slider's value has changed
+            sld.valueChanged.connect(self.plot)
+            sliders_grid.addWidget (sld, 0, col)
 
-        fi, ((self.ax1, self.ax3),(self.ax2, self.ax4))= plt.subplots(2, 2, figsize = (20,15), gridspec_kw={'height_ratios':[1,4]})
+        add_slider (foo = self.set_h01emq001, col = 0)
+        add_slider (foo = self.set_h01emq002, col = 1)
+        add_slider (foo = self.set_h01emq003, col = 2)
+        add_slider (foo = self.set_h01emq004, col = 3)
+        add_slider (foo = self.set_h01emq005, col = 4)
 
+        dock.setWidget(sliders)
+        self.plot()
+
+    def set_h01emq001(self, val):
+        self.k1_h01emq001 = val
+        
+    def set_h01emq002(self, val):
+        self.k1_h01emq002 = val
+
+    def set_h01emq003(self, val):
+        self.k1_h01emq003 = val
+        
+    def set_h01emq004(self, val):
+        self.k1_h01emq004 = val
+
+    def set_h01emq005(self, val):
+        self.k1_h01emq005 = val
+
+    def plot(self):
+
+        s = self.beamline.dataframe_madx_sequence["S"]-self.beamline.dataframe_madx_sequence["L"]/2
+        self.beamline.aperture_beamline()
+        self.beamline.build_dataframe_element()
+        self.maximum_s = max(self.beamline.dataframe_madx_sequence["S"])
+
+        list_emq = [Rectangle(( self.beamline.df_emq["S"][i]-self.beamline.df_emq["L"][i]/2, -0.2/2), self.beamline.df_emq["L"][i], 0.2,color ='skyblue') for i in self.beamline.df_emq.index]
+        list_stm = [Rectangle(( self.beamline.df_stm["S"][i]-self.beamline.df_stm["L"][i]/2, -0.2/2), self.beamline.df_stm["L"][i], 0.2,color ='limegreen') for i in self.beamline.df_stm.index]
+        list_bpm = [Rectangle(( self.beamline.df_bpm["S"][i]-self.beamline.df_bpm["L"][i]/2, -0.2/2), self.beamline.df_bpm["L"][i], 0.2,color ='orange') for i in self.beamline.df_bpm.index]
+        list_bend = [Rectangle(( self.beamline.df_bend["S"][i]-self.beamline.df_bend["L"][i]/2, -0.2/2), self.beamline.df_bend["L"][i], 0.2,color ='crimson') for i in self.beamline.df_bend.index]
+        list_fsm = [Rectangle(( self.beamline.df_fsm["S"][i]-self.beamline.df_fsm["L"][i]/2, -0.2/2), self.beamline.df_fsm["L"][i], 0.2,color ='purple') for i in self.beamline.df_fsm.index]
+
+        self.fi, ((self.ax1,self.ax3),(self.ax2, self.ax4))= plt.subplots(2, 2, figsize = (20,15), gridspec_kw={'height_ratios':[1,4]})
         for i in list_emq:
             nq=copy.copy(i)
             self.ax1.add_patch(nq)
@@ -52,7 +88,6 @@ class MainWindow(QtWidgets.QMainWindow):
             nfsm=copy.copy(i)
             self.ax1.add_patch(nfsm)
 
-        #self.ax1 = fi.add_subplot(221)
         self.ax1.plot([0, self.maximum_s],[0,0], "k", linewidth=0.5)
         self.ax1.set_ylim(-0.2,0.6)
         self.ax1.set_xlim(0,6)
@@ -63,45 +98,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ax1.spines['bottom'].set_visible(False)
         self.ax1.spines['left'].set_visible(False)
         self.ax1.spines['right'].set_visible(False)
-        #self.ax2 = fi.add_subplot(223)
-        self.ax2.plot(beamline.df_beam_size_along_s["S"], 3.0*beamline.df_beam_size_along_s["X"]*1000, "ob")
-        self.ax2.plot(beamline.df_beam_size_along_s["S"], -3.0*beamline.df_beam_size_along_s["X"]*1000, "ob")
-        self.ax2.step(s, beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
-        self.ax2.step(s, -beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
 
-        for i in list_emq:
-            nq=copy.copy(i)
-            self.ax3.add_patch(nq)
-        for i in list_stm:
-            ns=copy.copy(i)
-            self.ax3.add_patch(ns)
-        for i in list_bpm:
-            nb=copy.copy(i)
-            self.ax3.add_patch(nb)
-        for i in list_bend:
-            nbend=copy.copy(i)
-            self.ax3.add_patch(nbend)
-        for i in list_fsm:
-            nfsm=copy.copy(i)
-            self.ax3.add_patch(nfsm)
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], 3.0*self.beamline.df_beam_size_along_s["X"]*1000, "ob")
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], -3.0*self.beamline.df_beam_size_along_s["X"]*1000, "ob")
 
-        self.ax3.plot([0, self.maximum_s],[0,0], "k", linewidth=0.5)
-        self.ax3.set_ylim(-0.2,0.6)
-        self.ax3.grid()
-        self.ax3.axes.yaxis.set_visible(False)
-        self.ax3.axes.xaxis.set_visible(False)
-        self.ax3.spines['top'].set_visible(False)
-        self.ax3.spines['bottom'].set_visible(False)
-        self.ax3.spines['left'].set_visible(False)
-        self.ax3.spines['right'].set_visible(False)
-        self.ax3.set_xlim(0,6)
-        self.ax4.step(s, beamline.aperture_y, where = 'pre', color = 'k', label = "_nolabel_")
-        self.ax4.step(s, -beamline.aperture_y, where = 'pre', color = 'k', label = "_nolabel_")
-        self.ax4.set_xlabel("s(m)")
-        self.ax4.set_xlim(0,6)
-        self.ax4.set_ylim(-20,20)
-        self.ax4.set_ylabel("Vertical (mm)")
+        self.ax2.step(s, self.beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
+        self.ax2.step(s, -self.beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
 
-        central_widget = FigureCanvas(fi)
-        self.setCentralWidget(central_widget)
-        """
+        self.ax2.step(s, self.beamline.aperture_y, where = 'pre', color = 'r', label = "_nolabel_")
+        self.ax2.step(s, -self.beamline.aperture_y, where = 'pre', color = 'r', label = "_nolabel_")
+        self.ax2.set_xlabel("s(m)")
+        self.ax2.set_ylabel("Beam evelop (mm)")
+
+        self.ax3.hist(self.beamline.bm.distribution["X(mm)"], bins=50)
+        self.ax3.set_xlabel("X(mm)")
+        self.ax3.set_title("initial distribution -  OPT/FSM in the future")
+
+        self.ax4.scatter(self.beamline.bm.distribution["X(mm)"], self.beamline.bm.distribution["Y(mm)"], color = 'purple', s=0.5)
+        self.ax4.set_xlabel("X(mm)")
+        self.ax4.set_ylabel("Y(mm)")
+ 
+
+        self.canvas = FigureCanvas(self.fi)
+        self.setCentralWidget(self.canvas)
+        self.canvas.draw()
