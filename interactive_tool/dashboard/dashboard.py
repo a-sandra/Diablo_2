@@ -1,5 +1,6 @@
 import sys, copy
 import numpy as np
+import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
@@ -16,6 +17,12 @@ class MainWindow(QMainWindow):
     def __init__(self, tranferline,*args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
         self.beamline = tranferline
+        self.set_h01emq001(0)
+        self.set_h01emq002(0)
+        self.set_h01emq003(0)
+        self.set_h01emq004(0)
+        self.set_h01emq005(0)
+
 
         #self.figure = plt.figure()
         #self.drawing = self.figure.add_subplot(111)
@@ -59,6 +66,26 @@ class MainWindow(QMainWindow):
         self.k1_h01emq005 = val
 
     def plot(self):
+
+        print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
+        list_quad = ["H01_EMQ_01", "H01_EMQ_02", "H01_EMQ_03", "H01_EMQ_04", "H01_EMQ_05"]
+        k1l = [self.k1_h01emq001, self.k1_h01emq002, self.k1_h01emq003, self.k1_h01emq004, self.k1_h01emq005]
+        #print(self.beamline.df_beam_size_along_s["X"])
+        #print(k1l)
+        self.beamline.update_magnet_parameter("QUADRUPOLE", list_quad, "K1L", k1l)
+        print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
+
+        ##tracking
+        self.beamline.data = []
+        #self.beamline.df_beam_size_along_s = []
+        for index in np.arange(len(self.beamline.dataframe_madx_sequence)):
+            self.beamline.check_element_type(self.beamline.dataframe_madx_sequence.iloc[index])
+        self.beamline.main_dataframe_sequence = pd.DataFrame(self.beamline.data, columns=["NAME", "KEYWORD", "S","L", "K1","TRANSFER_MATRIX"])
+        self.beamline.tm_as_function_s_array = np.asarray(self.beamline.build_beamline_transfer_matrix(), dtype=object)
+        self.beamline.beam_distribution_at_every_element = self.beamline.cumulative_tracking()
+
+        print(self.beamline.df_beam_size_along_s["X"])
+        print(self.beamline.main_dataframe_sequence)
 
         s = self.beamline.dataframe_madx_sequence["S"]-self.beamline.dataframe_madx_sequence["L"]/2
         self.beamline.aperture_beamline()

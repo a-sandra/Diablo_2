@@ -112,10 +112,7 @@ class Beamline(object):
             self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP"])
             return track_particle
     
-    def update(self):
-        #self.update_magnet_parameter
-        return 1
-    
+
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a quad") 
