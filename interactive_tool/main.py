@@ -9,8 +9,8 @@ from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
-#sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
-sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
+sys.path.append("/Users/pickle/Documents/GitHub/Diablo_2")
+#sys.path.append(r"C:\Users\s.aumon\OneDrive - Advanced Oncotherapy plc\Python_Packages\Diablo_2")
 from beam import beam
 import madx_utils.madx_utils as mxu
 import interactive_tool.build_beamline as seq

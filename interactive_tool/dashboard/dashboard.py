@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider, QLabel
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -23,12 +23,6 @@ class MainWindow(QMainWindow):
         self.set_h01emq004(0)
         self.set_h01emq005(0)
 
-
-        #self.figure = plt.figure()
-        #self.drawing = self.figure.add_subplot(111)
-        #self.canvas = FigureCanvas(self.figure)
-        #self.setCentralWidget(self.canvas)
-
         dock = QDockWidget ("Values")
         self.addDockWidget (Qt.RightDockWidgetArea, dock)
         sliders = QWidget ()
@@ -36,9 +30,17 @@ class MainWindow(QMainWindow):
 
         def add_slider(foo, col):
             sld = QSlider(Qt.Vertical, sliders)
+            sld.setPageStep(0.5)
+            sld.setMaximum(50.0)
+            sld.setMinimum(-50.0)
             sld.setFocusPolicy(Qt.NoFocus)
             sld.valueChanged[int].connect(foo) #When the slider's value has changed
+            sld.valueChanged.connect(self.valueChanged)
             sld.valueChanged.connect(self.plot)
+
+            #self.label = QLabel('0', self)
+            #self.label.setAlignment(Qt.AlignmentFlag.AlignCenter, Qt.AlignmentFlag.AlignVCenter)
+            #self.label.setMinimumWidth(80)
             sliders_grid.addWidget (sld, 0, col)
 
         add_slider (foo = self.set_h01emq001, col = 0)
@@ -49,6 +51,9 @@ class MainWindow(QMainWindow):
 
         dock.setWidget(sliders)
         self.plot()
+    
+    def valueChanged(self, value):
+        self.label.setText(str(value))
 
     def set_h01emq001(self, val):
         self.k1_h01emq001 = val
