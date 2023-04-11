@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider, QLabel
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider, QLabel, QDoubleSpinBox
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -28,32 +28,42 @@ class MainWindow(QMainWindow):
         sliders = QWidget ()
         sliders_grid = QGridLayout (sliders)
 
-        def add_slider(foo, col):
+        def add_slider(col):
             sld = QSlider(Qt.Vertical, sliders)
             sld.setPageStep(0.5)
             sld.setMaximum(50.0)
             sld.setMinimum(-50.0)
             sld.setFocusPolicy(Qt.NoFocus)
-            sld.valueChanged[int].connect(foo) #When the slider's value has changed
-            sld.valueChanged.connect(self.valueChanged)
-            sld.valueChanged.connect(self.plot)
+            sliders_grid.addWidget (sld, 1, col)
+            return sld
 
-            #self.label = QLabel('0', self)
-            #self.label.setAlignment(Qt.AlignmentFlag.AlignCenter, Qt.AlignmentFlag.AlignVCenter)
-            #self.label.setMinimumWidth(80)
-            sliders_grid.addWidget (sld, 0, col)
+        def add_spinbox(foo, col, slider):
+            spinbox = QDoubleSpinBox()
+            spinbox.setMaximum(50.0)
+            spinbox.setMinimum(-50.0)
+            spinbox.valueChanged[float].connect(foo) #When the slider's value has changed
+            spinbox.valueChanged.connect(self.plot)
+            spinbox.valueChanged[float].connect(slider.setValue)
+            sliders_grid.addWidget (spinbox, 0, col)
+            slider.sliderReleased.connect(lambda:spinbox.setValue(slider.value()))
 
-        add_slider (foo = self.set_h01emq001, col = 0)
-        add_slider (foo = self.set_h01emq002, col = 1)
-        add_slider (foo = self.set_h01emq003, col = 2)
-        add_slider (foo = self.set_h01emq004, col = 3)
-        add_slider (foo = self.set_h01emq005, col = 4)
+
+        sld1 = add_slider (col = 0)
+        sld2 = add_slider (col = 1)
+        sld3 = add_slider (col = 2)
+        sld4 = add_slider (col = 3)
+        sld5 = add_slider (col = 4)
+        add_spinbox(foo = self.set_h01emq001, col = 0, slider = sld1)
+        add_spinbox(foo = self.set_h01emq002, col = 1, slider = sld2)
+        add_spinbox(foo = self.set_h01emq003, col = 2, slider = sld3)
+        add_spinbox(foo = self.set_h01emq004, col = 3, slider = sld4)
+        add_spinbox(foo = self.set_h01emq005, col = 4, slider = sld5)
 
         dock.setWidget(sliders)
         self.plot()
     
-    def valueChanged(self, value):
-        self.label.setText(str(value))
+#    def convert_to_int(self, val):
+
 
     def set_h01emq001(self, val):
         self.k1_h01emq001 = val
@@ -71,7 +81,7 @@ class MainWindow(QMainWindow):
         self.k1_h01emq005 = val
 
     def plot(self):
-
+        print("bonjour")
         print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
         list_quad = ["H01_EMQ_01", "H01_EMQ_02", "H01_EMQ_03", "H01_EMQ_04", "H01_EMQ_05"]
         k1l = [self.k1_h01emq001, self.k1_h01emq002, self.k1_h01emq003, self.k1_h01emq004, self.k1_h01emq005]
