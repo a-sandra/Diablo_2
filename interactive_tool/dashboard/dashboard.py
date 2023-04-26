@@ -151,6 +151,7 @@ class MainWindow(QMainWindow):
         self.ax2.step(s, -self.beamline.aperture_y, where = 'pre', color = 'r', label = "_nolabel_")
         self.ax2.set_xlabel("s(m)")
         self.ax2.set_ylabel("Beam evelop (mm)")
+        self.ax2.set_ylim(-30, 30)
 
         self.ax3.hist(self.beamline.bm.distribution["X(mm)"], bins=50)
         self.ax3.set_xlabel("X(mm)")

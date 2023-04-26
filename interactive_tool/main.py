@@ -39,10 +39,10 @@ bl_with_input = seq.Beamline(lattice_file, input_distribution)
 #print(bl_with_input.dataframe_madx_sequence[bl_with_input.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
 
 #------ Dashboard ----------
-app = QtWidgets.QApplication(sys.argv)
-window = QtWidgets.QWidget()
+#app = QtWidgets.QApplication(sys.argv)
+#window = QtWidgets.QWidget()
 
-window = MainWindow(bl_with_input)
+#window = MainWindow(bl_with_input)
 #
-window.show()
-app.exec_()
+#window.show()
+#app.exec_()
