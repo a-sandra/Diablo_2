@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+import matplotlib.gridspec as gridspec
 
 matplotlib.rcParams.update({'font.size': 9})
 
@@ -17,19 +18,19 @@ class MainWindow(QMainWindow):
     def __init__(self, tranferline,*args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
         self.beamline = tranferline
-        self.set_h01emq001(0)
-        self.set_h01emq002(0)
-        self.set_h01emq003(0)
-        self.set_h01emq004(0)
-        self.set_h01emq005(0)
+        self.set_h01emq001(-10.8*.14)
+        self.set_h01emq002(4.58*0.14)
+        self.set_h01emq003(-6.76*0.14)
+        self.set_h01emq004(8.22*0.14)
+        self.set_h01emq005(-5.62*0.14)
 
         dock = QDockWidget ("Values")
-        self.addDockWidget (Qt.RightDockWidgetArea, dock)
+        self.addDockWidget (Qt.BottomDockWidgetArea, dock)
         sliders = QWidget ()
         sliders_grid = QGridLayout (sliders)
 
         def add_slider(col):
-            sld = QSlider(Qt.Vertical, sliders)
+            sld = QSlider(Qt.Horizontal, sliders)
             sld.setPageStep(0.5)
             sld.setMaximum(50.0)
             sld.setMinimum(-50.0)
@@ -37,13 +38,15 @@ class MainWindow(QMainWindow):
             sliders_grid.addWidget (sld, 1, col)
             return sld
 
-        def add_spinbox(foo, col, slider):
+        def add_spinbox(foo, col, slider, name, unit):
             spinbox = QDoubleSpinBox()
             spinbox.setMaximum(50.0)
             spinbox.setMinimum(-50.0)
             spinbox.valueChanged[float].connect(foo) #When the slider's value has changed
             spinbox.valueChanged.connect(self.plot)
             spinbox.valueChanged[float].connect(slider.setValue)
+            spinbox.setPrefix(name)
+            spinbox.setSuffix(unit)
             sliders_grid.addWidget (spinbox, 0, col)
             slider.sliderReleased.connect(lambda:spinbox.setValue(slider.value()))
 
@@ -53,11 +56,11 @@ class MainWindow(QMainWindow):
         sld3 = add_slider (col = 2)
         sld4 = add_slider (col = 3)
         sld5 = add_slider (col = 4)
-        add_spinbox(foo = self.set_h01emq001, col = 0, slider = sld1)
-        add_spinbox(foo = self.set_h01emq002, col = 1, slider = sld2)
-        add_spinbox(foo = self.set_h01emq003, col = 2, slider = sld3)
-        add_spinbox(foo = self.set_h01emq004, col = 3, slider = sld4)
-        add_spinbox(foo = self.set_h01emq005, col = 4, slider = sld5)
+        add_spinbox(foo = self.set_h01emq001, col = 0, slider = sld1, name = "H01-EMQ-01: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h01emq002, col = 1, slider = sld2, name = "H01-EMQ-02: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h01emq003, col = 2, slider = sld3, name = "H01-EMQ-03: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h01emq004, col = 3, slider = sld4, name = "H01-EMQ-04: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h01emq005, col = 4, slider = sld5, name = "H01-EMQ-05: ", unit = " m^-2")
 
         dock.setWidget(sliders)
         self.plot()
@@ -81,14 +84,14 @@ class MainWindow(QMainWindow):
         self.k1_h01emq005 = val
 
     def plot(self):
-        print("bonjour")
-        print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
+        #print("bonjour")
+        #print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
         list_quad = ["H01_EMQ_01", "H01_EMQ_02", "H01_EMQ_03", "H01_EMQ_04", "H01_EMQ_05"]
         k1l = [self.k1_h01emq001, self.k1_h01emq002, self.k1_h01emq003, self.k1_h01emq004, self.k1_h01emq005]
         #print(self.beamline.df_beam_size_along_s["X"])
         #print(k1l)
         self.beamline.update_magnet_parameter("QUADRUPOLE", list_quad, "K1L", k1l)
-        print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
+        #print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
 
         ##tracking
         self.beamline.data = []
@@ -99,8 +102,8 @@ class MainWindow(QMainWindow):
         self.beamline.tm_as_function_s_array = np.asarray(self.beamline.build_beamline_transfer_matrix(), dtype=object)
         self.beamline.beam_distribution_at_every_element = self.beamline.cumulative_tracking()
 
-        print(self.beamline.df_beam_size_along_s["X"])
-        print(self.beamline.main_dataframe_sequence)
+        #print(self.beamline.df_beam_size_along_s["X"])
+        #print(self.beamline.main_dataframe_sequence)
 
         s = self.beamline.dataframe_madx_sequence["S"]-self.beamline.dataframe_madx_sequence["L"]/2
         self.beamline.aperture_beamline()
@@ -113,7 +116,19 @@ class MainWindow(QMainWindow):
         list_bend = [Rectangle(( self.beamline.df_bend["S"][i]-self.beamline.df_bend["L"][i]/2, -0.2/2), self.beamline.df_bend["L"][i], 0.2,color ='crimson') for i in self.beamline.df_bend.index]
         list_fsm = [Rectangle(( self.beamline.df_fsm["S"][i]-self.beamline.df_fsm["L"][i]/2, -0.2/2), self.beamline.df_fsm["L"][i], 0.2,color ='purple') for i in self.beamline.df_fsm.index]
 
-        self.fi, ((self.ax1,self.ax3),(self.ax2, self.ax4))= plt.subplots(2, 2, figsize = (20,15), gridspec_kw={'height_ratios':[1,4]})
+        #self.fi, ((self.ax1,self.ax3),(self.ax2, self.ax4))= plt.subplots(2, 2, figsize = (20,15), gridspec_kw={'height_ratios':[1,4]})
+
+        self.fi = plt.figure(figsize = (20,20), tight_layout = True)
+        gs = gridspec.GridSpec(3,3, width_ratios=[1,1, 3],height_ratios = [3,0.5,3], hspace = 0.3)
+
+        self.ax3 = self.fi.add_subplot(gs[0, 0])
+        self.ax4 = self.fi.add_subplot(gs[0, 2])
+        self.ax5 = self.fi.add_subplot(gs[0, 1])
+        self.ax1 = self.fi.add_subplot(gs[1, :])
+        self.ax2 = self.fi.add_subplot(gs[2, :])
+        #self.fi.align_labels()
+
+
         for i in list_emq:
             nq=copy.copy(i)
             self.ax1.add_patch(nq)
@@ -141,26 +156,41 @@ class MainWindow(QMainWindow):
         self.ax1.spines['left'].set_visible(False)
         self.ax1.spines['right'].set_visible(False)
 
-        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], 3.0*self.beamline.df_beam_size_along_s["X"]*1000, "ob")
-        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], -3.0*self.beamline.df_beam_size_along_s["X"]*1000, "ob")
+
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], 3.0*self.beamline.df_beam_size_along_s["X"]*1000, "--ob")
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], -3.0*self.beamline.df_beam_size_along_s["X"]*1000, "--ob")
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], 3.0*self.beamline.df_beam_size_along_s["Y"]*1000, "--og")
+        self.ax2.plot(self.beamline.df_beam_size_along_s["S"], -3.0*self.beamline.df_beam_size_along_s["Y"]*1000, "--og")
+
+        self.ax2.plot(self.beamline.dataframe_madx_sequence["S"], 3.0*self.beamline.dataframe_madx_sequence["SIGMA_X"]*1000, "--y")
+        self.ax2.plot(self.beamline.dataframe_madx_sequence["S"], -3.0*self.beamline.dataframe_madx_sequence["SIGMA_X"]*1000, "--y")
+        self.ax2.plot(self.beamline.dataframe_madx_sequence["S"], 3.0*self.beamline.dataframe_madx_sequence["SIGMA_Y"]*1000, "--k")
+        self.ax2.plot(self.beamline.dataframe_madx_sequence["S"], -3.0*self.beamline.dataframe_madx_sequence["SIGMA_Y"]*1000, "--k")
 
         self.ax2.step(s, self.beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
         self.ax2.step(s, -self.beamline.aperture_x, where = 'pre', color = 'k', label = "_nolabel_")
-
         self.ax2.step(s, self.beamline.aperture_y, where = 'pre', color = 'r', label = "_nolabel_")
         self.ax2.step(s, -self.beamline.aperture_y, where = 'pre', color = 'r', label = "_nolabel_")
         self.ax2.set_xlabel("s(m)")
         self.ax2.set_ylabel("Beam evelop (mm)")
         self.ax2.set_ylim(-30, 30)
 
-        self.ax3.hist(self.beamline.bm.distribution["X(mm)"], bins=50)
+        self.ax3.hist(self.beamline.distribution_fsm_h01[:,0]*1000, bins=50)
         self.ax3.set_xlabel("X(mm)")
-        self.ax3.set_title("initial distribution -  OPT/FSM in the future")
+        self.ax3.set_title("Distribution - H01-FSM-001")
 
-        self.ax4.scatter(self.beamline.bm.distribution["X(mm)"], self.beamline.bm.distribution["Y(mm)"], color = 'purple', s=0.5)
+        self.ax5.hist(self.beamline.distribution_fsm_h01[:,2]*1000, bins=50)
+        self.ax5.set_xlabel("Y(mm)")
+        self.ax5.set_title("Distribution - H01-FSM-001")
+
+        self.ax4.scatter(self.beamline.distribution_fsm_h01[:,0]*1000, self.beamline.distribution_fsm_h01[:,2]*1000, color = 'purple', s=0.5)
         self.ax4.set_xlabel("X(mm)")
         self.ax4.set_ylabel("Y(mm)")
- 
+        self.ax4.set_xlim(-16,16)
+        self.ax4.set_ylim(-16,16)
+        self.ax4.set_aspect('equal', adjustable = 'box')
+        self.ax4.grid()
+
 
         self.canvas = FigureCanvas(self.fi)
         self.setCentralWidget(self.canvas)

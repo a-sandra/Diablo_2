@@ -36,13 +36,13 @@ bl_with_input = seq.Beamline(lattice_file, input_distribution)
 #list_quad = ["H01_EMQ_01", "H01_EMQ_02", "H01_EMQ_03"]
 #k1 = [1.5, -8.5, 5.0]
 #bl_with_input.update_magnet_parameter("QUADRUPOLE", list_quad, "K1L", k1)
-#print(bl_with_input.dataframe_madx_sequence[bl_with_input.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
+#print(bl_with_input.dataframe_madx_sequence[bl_with_input.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"]["K1L"]/0.14)
 
 #------ Dashboard ----------
-#app = QtWidgets.QApplication(sys.argv)
-#window = QtWidgets.QWidget()
+app = QtWidgets.QApplication(sys.argv)
+window = QtWidgets.QWidget()
 
-#window = MainWindow(bl_with_input)
+window = MainWindow(bl_with_input)
 #
-#window.show()
-#app.exec_()
+window.show()
+app.exec_()

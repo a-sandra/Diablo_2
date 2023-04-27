@@ -72,6 +72,9 @@ class Beamline(object):
             self.main_dataframe_sequence = pd.DataFrame({"NAME": pd.Series(dtype="str"), "KEYWORD": pd.Series(dtype="str"), "S": pd.Series(dtype="float"),
                                                         "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"),
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
+            
+            self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
+
             self.data = []
             self.df_beam_size_along_s = []
             for index in np.arange(len(self.dataframe_madx_sequence)):
@@ -115,22 +118,24 @@ class Beamline(object):
                 beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]), 
                                               np.std(track_particle[index+1][2]), np.std(track_particle[index+1][3]) ]
             self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP", "Y", "YP"])
+            self.distribution_fsm_h01 = np.transpose(np.array(track_particle[self.index_fsm_dataframe]))
+            #print(np.transpose(self.distribution_fsm_h01)[:,0])
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["X"], "--o",label="x tracking")
             plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_X"], "--o",label = "x madx")
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["Y"], "--o",label="y tracking")
             plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_Y"], "--o",label = "y madx")
-
             plt.legend()
-            plt.show()
+            #plt.show()
 
             #print(np.std(my_beam.distribution["X(mm)"]))
             #print(self.dataframe_madx_sequence[:-5])
             #print(self.df_beam_size_along_s)
             #print(beam_size_along_s)
+            print(len(track_particle))
             return track_particle
-    
+ 
 
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":
@@ -319,7 +324,7 @@ class Dipole(object):
         self.dipole_magnetic_length = dip_length
         self.rho = self.dipole_magnetic_length/self.bending_angle
         self.dipole_name = name
-        print(self.rho)
+        #print(self.rho)
         #self.dipole_transfert_matrix = opu.sector_dipole(self.dipole_magnetic_length, self.rho)
         #self.dipole_transfert_matrix = opu.md(self.dipole_magnetic_length)
 
