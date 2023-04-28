@@ -17,7 +17,7 @@ import interactive_tool.build_beamline as seq
 import optics_utils.transfer_matrices as opu
 from dashboard.dashboard import MainWindow
 
-lattice_file = "lattice_example/optics_71.7_MeV.twiss"
+lattice_file = "lattice_example/optics_71.7_MeV_full_HEBT.twiss"
 #"lattice_example/optics_71.7_MeV_full_HEBT.twiss"
 df_optics = mxu.get_twiss(lattice_file)
 input_distribution = "distribution_example/CCL_Output_71.7.dat"
@@ -37,10 +37,10 @@ bl_with_input = seq.Beamline(lattice_file, input_distribution)
 #print(bl_with_input.dataframe_madx_sequence[bl_with_input.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"]["K1L"]/0.14)
 
 #------ Dashboard ----------
-app = QtWidgets.QApplication(sys.argv)
-window = QtWidgets.QWidget()
+#app = QtWidgets.QApplication(sys.argv)
+#window = QtWidgets.QWidget()
 
-window = MainWindow(bl_with_input)
+#window = MainWindow(bl_with_input)
 #
-window.show()
-app.exec_()
+#window.show()
+#app.exec_()
