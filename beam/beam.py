@@ -33,7 +33,7 @@ class Beam(object):
             self.E_ptc = 0
             self.ptc_coordinates = []
             self.travel_distribution = []
-            print("beam created without any input beam distribution. Use read_distribution(filename) et voila")
+            print("beam created without any input beam distribution. Use read_distribution(filename)")
         else: 
             self.read_distribution(distribution_file_name)
             
@@ -62,9 +62,9 @@ class Beam(object):
 
     # This method reads a beam distribution with a standard format ["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Z(mm)", "W(MeV)"] in mm, mrad, MeV
     def read_distribution(self, filename):
-        print("Hello")
+        #print("Hello")
         try:
-            print("je suis la")
+            #print("je suis la")
             lheader = ["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Z(mm)", "W(MeV)"]
             self.distribution = pd.read_csv(filename, delim_whitespace=True, skiprows=1, names=lheader)
             self.x = self.distribution["X(mm)"]

@@ -17,10 +17,8 @@ import interactive_tool.build_beamline as seq
 import optics_utils.transfer_matrices as opu
 from dashboard.dashboard import MainWindow
 
-
-print(os.getcwd())
-
 lattice_file = "lattice_example/optics_71.7_MeV.twiss"
+#"lattice_example/optics_71.7_MeV_full_HEBT.twiss"
 df_optics = mxu.get_twiss(lattice_file)
 input_distribution = "distribution_example/CCL_Output_71.7.dat"
 

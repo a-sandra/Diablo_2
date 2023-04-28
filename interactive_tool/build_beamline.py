@@ -29,12 +29,11 @@ class Beamline(object):
         self.steerer_list = []
         self.non_magnetic_element = []
         self.input_file_distribution = input_beam
-        #self.test = []
 
         # check if an input file is given.
         # this part should just build the beam line.
         if bool(self.sequence_file) is True:
-            print("beamline created")
+            #print("beamline created")
             self.build_beamline_from_sequence_file(self.sequence_file)
         else:
             print("No Twiss file has been provided, the beam line is empty")
@@ -53,7 +52,7 @@ class Beamline(object):
         if not self.sequence_file:
             print("No Twiss file")
         else:
-            print("sequence file given")
+            #print("sequence file given")
             self.dataframe_madx_sequence = mxu.get_twiss(self.sequence_file) # Here, we supposed that the sequence file is a MADX sequence file
             # this could be done as an external function.
             with open(self.sequence_file, "r") as fp:
@@ -74,6 +73,7 @@ class Beamline(object):
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
             
             self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
+            self.index_opt_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_OPT_01")][0]
 
             self.data = []
             self.df_beam_size_along_s = []
@@ -119,6 +119,7 @@ class Beamline(object):
                                               np.std(track_particle[index+1][2]), np.std(track_particle[index+1][3]) ]
             self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP", "Y", "YP"])
             self.distribution_fsm_h01 = np.transpose(np.array(track_particle[self.index_fsm_dataframe]))
+            self.distribution_opt_h01 = np.transpose(np.array(track_particle[self.index_opt_dataframe]))
             #print(np.transpose(self.distribution_fsm_h01)[:,0])
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["X"], "--o",label="x tracking")
@@ -133,7 +134,7 @@ class Beamline(object):
             #print(self.dataframe_madx_sequence[:-5])
             #print(self.df_beam_size_along_s)
             #print(beam_size_along_s)
-            print(len(track_particle))
+            #print(len(track_particle))
             return track_particle
  
 
@@ -171,7 +172,7 @@ class Beamline(object):
             self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md(element["L"])])
 
         elif element["KEYWORD"]=="MARKER":
-            print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a MARKER, no length")
+            #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a MARKER, no length")
             self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.unity()])
 
         elif element["KEYWORD"]=="MONITOR":
