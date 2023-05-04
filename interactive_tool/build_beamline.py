@@ -52,7 +52,7 @@ class Beamline(object):
         if not self.sequence_file:
             print("No Twiss file")
         else:
-            #print("sequence file given")
+            print("sequence file given")
             self.dataframe_madx_sequence = mxu.get_twiss(self.sequence_file) # Here, we supposed that the sequence file is a MADX sequence file
             # this could be done as an external function.
             with open(self.sequence_file, "r") as fp:
@@ -71,9 +71,8 @@ class Beamline(object):
             self.main_dataframe_sequence = pd.DataFrame({"NAME": pd.Series(dtype="str"), "KEYWORD": pd.Series(dtype="str"), "S": pd.Series(dtype="float"),
                                                         "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"),
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
-            
-            self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
-            self.index_opt_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_OPT_01")][0]
+            #self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
+            #self.index_opt_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_OPT_01")][0]
 
             self.data = []
             self.df_beam_size_along_s = []
@@ -86,7 +85,7 @@ class Beamline(object):
 
     def build_beamline_transfer_matrix(self):
         # tm stands for transfer matrix
-        tm_as_function_s_temp = np.zeros((len(self.main_dataframe_sequence), 4, 4)) # from 2d to 4d to 5D dispersion
+        tm_as_function_s_temp = np.zeros((len(self.main_dataframe_sequence), 5,5)) # from 2d to 4d to 5D dispersion
         tm_as_function_s_temp[0] = self.main_dataframe_sequence["TRANSFER_MATRIX"].iloc[0]
 
         for index in np.arange(0, len(self.main_dataframe_sequence)-1):
@@ -102,36 +101,35 @@ class Beamline(object):
             print("beam distribution file given"+ " "+self.input_file_distribution)
             my_beam = beam.Beam()
             my_beam.read_distribution(self.input_file_distribution)
-            self.bm = my_beam 
-            #my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)"]].to_numpy())
-            my_beam.distribution.insert(6, "Dx(m)", np.zeros(number_particle), True)
-            print(my_beam.distribution)
-            my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Dx(m)"]].to_numpy())
             number_particle = len(my_beam.distribution["X(mm)"])
-            #df = my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)"]]*0.001
+            my_beam.distribution.insert(6, "Dp/p", my_beam.dpp, True)
+            #my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)"]].to_numpy())
+            my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Dp/p"]].to_numpy())
+            #print(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Dp/p"]])
 
-            #track_particle = np.zeros((len(self.main_dataframe_sequence), 5, number_particle))
-            #beam_size_along_s = np.zeros((len(self.dataframe_madx_sequence), 5))
-            #track_particle[0] = self.tm_as_function_s_array[0].dot(my_distr)
-            #beam_size_along_s[0] = [self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]),np.std(my_distr[1]), 
-            #                        np.std(my_distr[2]),np.std(my_distr[3])]
+            track_particle = np.zeros((len(self.main_dataframe_sequence), 5, number_particle))
+            beam_size_along_s = np.zeros((len(self.dataframe_madx_sequence), 5)) # do not change 5
+            track_particle[0] = self.tm_as_function_s_array[0].dot(my_distr)
+            print(my_distr.shape, self.tm_as_function_s_array[0].shape)
+            print(self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]))
+            beam_size_along_s[0] = [self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]),np.std(my_distr[1]), np.std(my_distr[2]),np.std(my_distr[3])]
 
-            #for index in np.arange(0, len(self.main_dataframe_sequence)-1):
-            #    track_particle[index+1] = self.tm_as_function_s_array[index+1].dot(my_distr)
-            #    beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]), 
-            #                                  np.std(track_particle[index+1][2]), np.std(track_particle[index+1][3]) ]
-            #self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP", "Y", "YP"])
+            for index in np.arange(0, len(self.main_dataframe_sequence)-1):
+                track_particle[index+1] = self.tm_as_function_s_array[index+1].dot(my_distr)
+                beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1]+ 0.5*self.main_dataframe_sequence["L"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]), 
+                                              np.std(track_particle[index+1][2]), np.std(track_particle[index+1][3]) ]
+            self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP", "Y", "YP"])
             #self.distribution_fsm_h01 = np.transpose(np.array(track_particle[self.index_fsm_dataframe]))
             #self.distribution_opt_h01 = np.transpose(np.array(track_particle[self.index_opt_dataframe]))
             #print(np.transpose(self.distribution_fsm_h01)[:,0])
 
-            #plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["X"], "--o",label="x tracking")
-            #plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_X"], "--o",label = "x madx")
+            plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["X"], "--o",label="x tracking")
+            plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_X"], "--o",label = "x madx")
 
-            #plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["Y"], "--o",label="y tracking")
-            #plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_Y"], "--o",label = "y madx")
-            #plt.legend()
-            #plt.show()
+            plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["Y"], "--o",label="y tracking")
+            plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_Y"], "--o",label = "y madx")
+            plt.legend()
+            plt.show()
 
             #print(np.std(my_beam.distribution["X(mm)"]))
             #print(self.dataframe_madx_sequence[:-5])
@@ -145,20 +143,24 @@ class Beamline(object):
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a quad") 
             quad = Quadrupole(self, element["K1L"],  element["NAME"], element["L"])
             self.quadrupole_list.append(quad)
-            if (element["K1L"]>=0):
+            if (element["K1L"]>0):
                 k1 = element["K1L"]/element["L"]
                 self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"]/element["L"], 
                                 opu.mqf(k1, element["L"])])
-            else:
+            elif (element["K1L"]<0):
                 k1 = element["K1L"]/element["L"]
                 self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"]/element["L"], 
                                 opu.mqd(k1, element["L"])])
+            elif (element["K1L"]==0):
+                self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"], opu.md( element["L"])])
+
 
         elif element["KEYWORD"]=="SBEND":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is sbend")
             sbend = Dipole(self, element["L"], 0.785398, element["NAME"])
             self.sbend_list.append(sbend)
             rho = element["L"]/0.785398
+            print(rho)
             self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"],  opu.sector_dipole( element["L"], rho)])
 
         elif element["KEYWORD"]=="DRIFT":
