@@ -71,8 +71,8 @@ class Beamline(object):
             self.main_dataframe_sequence = pd.DataFrame({"NAME": pd.Series(dtype="str"), "KEYWORD": pd.Series(dtype="str"), "S": pd.Series(dtype="float"),
                                                         "L": pd.Series(dtype="float"), "K1": pd.Series(dtype="float"),
                                                         "TRANSFER_MATRIX": pd.Series(dtype="float")})
-            #self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
-            #self.index_opt_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_OPT_01")][0]
+            self.index_fsm_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_FSM_01")][0]
+            self.index_opt_dataframe = self.dataframe_madx_sequence.index[(self.dataframe_madx_sequence["NAME"]=="H01_OPT_01")][0]
 
             self.data = []
             self.df_beam_size_along_s = []
@@ -103,15 +103,17 @@ class Beamline(object):
             my_beam.read_distribution(self.input_file_distribution)
             number_particle = len(my_beam.distribution["X(mm)"])
             my_beam.distribution.insert(6, "Dp/p", my_beam.dpp, True)
-            #my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)"]].to_numpy())
-            my_distr = 0.001*np.transpose(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Dp/p"]].to_numpy())
-            #print(my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Dp/p"]])
+            temp_distro = 0.001*my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)"]]
+            print(temp_distro)
+            temp_distro.insert(4, "Dp/p", my_beam.dpp, True)
+            print(temp_distro)
+            my_distr = np.transpose(temp_distro.to_numpy())
 
             track_particle = np.zeros((len(self.main_dataframe_sequence), 5, number_particle))
             beam_size_along_s = np.zeros((len(self.dataframe_madx_sequence), 5)) # do not change 5
             track_particle[0] = self.tm_as_function_s_array[0].dot(my_distr)
-            print(my_distr.shape, self.tm_as_function_s_array[0].shape)
-            print(self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]))
+            #print(my_distr.shape, self.tm_as_function_s_array[0].shape)
+            #print(self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]))
             beam_size_along_s[0] = [self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]),np.std(my_distr[1]), np.std(my_distr[2]),np.std(my_distr[3])]
 
             for index in np.arange(0, len(self.main_dataframe_sequence)-1):
@@ -128,6 +130,7 @@ class Beamline(object):
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["Y"], "--o",label="y tracking")
             plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_Y"], "--o",label = "y madx")
+            #plt.hist(my_beam.dpp)
             plt.legend()
             plt.show()
 
