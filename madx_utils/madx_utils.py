@@ -11,7 +11,7 @@ def get_PTC_distribution(filename):
 def get_beam_distribution(filename):
     lheader = ["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)", "Z(mm)", "W(MeV)"]
     df = _pd.read_csv(filename, dtype=float, delim_whitespace=True, header=0, names=lheader, skiprows=1)
-    get_distribution(df)
+    #get_distribution(df)
     return df
 
 def get_number_of_particle(filename):

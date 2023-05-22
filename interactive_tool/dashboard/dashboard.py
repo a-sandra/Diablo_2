@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 matplotlib.use('Qt5Agg')
 
 from scipy import stats
+import random
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QWidget, QGridLayout, QSlider, QLabel, QDoubleSpinBox
 from PyQt5.QtCore import Qt
@@ -20,11 +21,22 @@ class MainWindow(QMainWindow):
     def __init__(self, tranferline,*args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
         self.beamline = tranferline
-        self.set_h01emq001(-10.8*.14)
-        self.set_h01emq002(4.58*0.14)
-        self.set_h01emq003(-6.76*0.14)
-        self.set_h01emq004(8.22*0.14)
-        self.set_h01emq005(-5.62*0.14)
+
+        #self.beamline.get_quadrupole_dataframe()[["NAME", "K1"]]
+        #for index_quadrupole in self.beamline.get_quadrupole_dataframe()[["NAME", "K1"]]
+        #self.beamline.get_quadrupole_dataframe()
+
+        self.set_h01emq001(self.beamline.quadrupole_df.iloc[0]["K1"]*self.beamline.quadrupole_df.iloc[0]["L"])
+        self.set_h01emq002(self.beamline.quadrupole_df.iloc[1]["K1"]*self.beamline.quadrupole_df.iloc[1]["L"])
+        self.set_h01emq003(self.beamline.quadrupole_df.iloc[2]["K1"]*self.beamline.quadrupole_df.iloc[2]["L"])
+        self.set_h01emq004(self.beamline.quadrupole_df.iloc[3]["K1"]*self.beamline.quadrupole_df.iloc[3]["L"])
+        self.set_h01emq005(self.beamline.quadrupole_df.iloc[4]["K1"]*self.beamline.quadrupole_df.iloc[4]["L"])
+        self.set_h02emq001(self.beamline.quadrupole_df.iloc[5]["K1"]*self.beamline.quadrupole_df.iloc[5]["L"])
+        self.set_h03emq001(self.beamline.quadrupole_df.iloc[6]["K1"]*self.beamline.quadrupole_df.iloc[6]["L"])
+        self.set_h03emq002(self.beamline.quadrupole_df.iloc[7]["K1"]*self.beamline.quadrupole_df.iloc[7]["L"])
+        self.set_h03emq003(self.beamline.quadrupole_df.iloc[8]["K1"]*self.beamline.quadrupole_df.iloc[8]["L"])
+        self.set_h03emq004(self.beamline.quadrupole_df.iloc[9]["K1"]*self.beamline.quadrupole_df.iloc[9]["L"])
+        self.set_h03emq005(self.beamline.quadrupole_df.iloc[10]["K1"]*self.beamline.quadrupole_df.iloc[10]["L"])
 
         dock = QDockWidget ("Values")
         self.addDockWidget (Qt.BottomDockWidgetArea, dock)
@@ -52,23 +64,34 @@ class MainWindow(QMainWindow):
             sliders_grid.addWidget (spinbox, 0, col)
             slider.sliderReleased.connect(lambda:spinbox.setValue(slider.value()))
 
-
         sld1 = add_slider (col = 0)
         sld2 = add_slider (col = 1)
         sld3 = add_slider (col = 2)
         sld4 = add_slider (col = 3)
         sld5 = add_slider (col = 4)
+
+        sld6 = add_slider (col = 5)
+        sld7 = add_slider (col = 6)
+        sld8 = add_slider (col = 7)
+        sld9 = add_slider (col = 8)
+        sld10 = add_slider (col = 9)
+        sld11 = add_slider (col = 10)
         add_spinbox(foo = self.set_h01emq001, col = 0, slider = sld1, name = "H01-EMQ-01: ", unit = " m^-2")
         add_spinbox(foo = self.set_h01emq002, col = 1, slider = sld2, name = "H01-EMQ-02: ", unit = " m^-2")
         add_spinbox(foo = self.set_h01emq003, col = 2, slider = sld3, name = "H01-EMQ-03: ", unit = " m^-2")
         add_spinbox(foo = self.set_h01emq004, col = 3, slider = sld4, name = "H01-EMQ-04: ", unit = " m^-2")
         add_spinbox(foo = self.set_h01emq005, col = 4, slider = sld5, name = "H01-EMQ-05: ", unit = " m^-2")
+        #add_spinbox(foo = self.set_h02emq001, col = 5, slider = sld6, name = "H02-EMQ-01: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h03emq001, col = 6, slider = sld7, name = "H03-EMQ-01: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h03emq002, col = 7, slider = sld8, name = "H03-EMQ-02: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h03emq003, col = 8, slider = sld9, name = "H03-EMQ-03: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h03emq004, col = 9, slider = sld10, name = "H03-EMQ-04: ", unit = " m^-2")
+        add_spinbox(foo = self.set_h03emq005, col = 10, slider = sld11, name = "H03-EMQ-05: ", unit = " m^-2")
 
         dock.setWidget(sliders)
         self.plot()
     
 #    def convert_to_int(self, val):
-
 
     def set_h01emq001(self, val):
         self.k1_h01emq001 = val
@@ -84,6 +107,24 @@ class MainWindow(QMainWindow):
 
     def set_h01emq005(self, val):
         self.k1_h01emq005 = val
+    
+    def set_h02emq001(self, val):
+        self.k1_h02emq001 = val
+
+    def set_h03emq001(self, val):
+        self.k1_h03emq001 = val
+    
+    def set_h03emq002(self, val):
+        self.k1_h03emq002 = val
+
+    def set_h03emq003(self, val):
+        self.k1_h03emq003 = val
+
+    def set_h03emq004(self, val):
+        self.k1_h03emq004 = val
+
+    def set_h03emq005(self, val):
+        self.k1_h03emq005 = val
 
     def plot(self):
         #print(self.beamline.dataframe_madx_sequence[self.beamline.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"])
@@ -117,7 +158,7 @@ class MainWindow(QMainWindow):
         list_bend = [Rectangle(( self.beamline.df_bend["S"][i]-self.beamline.df_bend["L"][i]/2, -0.2/2), self.beamline.df_bend["L"][i], 0.2,color ='crimson') for i in self.beamline.df_bend.index]
         list_fsm = [Rectangle(( self.beamline.df_fsm["S"][i]-self.beamline.df_fsm["L"][i]/2, -0.2/2), self.beamline.df_fsm["L"][i], 0.2,color ='purple') for i in self.beamline.df_fsm.index]
 
-        self.fi = plt.figure(figsize = (20,20), tight_layout = True)
+        self.fi = plt.figure(figsize = (20,20)) #, tight_layout = True
         gs = gridspec.GridSpec(3,4, width_ratios=[1,1,1,3],height_ratios = [3,0.5,3], hspace = 0.3)
 
         self.ax3 = self.fi.add_subplot(gs[0, 0])
@@ -191,11 +232,20 @@ class MainWindow(QMainWindow):
         self.ax3.set_xlim(-16,16)
         self.ax3.set_title("H01-FSM-001")
 
-        self.ax5.hist(self.beamline.distribution_fsm_h01[:,2]*1000, bins=50, density = True, histtype = 'step')
-        self.ax5.scatter(self.beamline.distribution_fsm_h01[:,2]*1000, vertical_gaussian_fit, s=0.5)
+
+        x_fsm = np.arange(-16, 16, 0.125)
+        simu_pdf = stats.norm.pdf(x_fsm,loc=0.01, scale=0.16)
+        size_fsm_simu = len(simu_pdf)
+        noise = [random.random()/4 for i in range(size_fsm_simu)]
+        fsm_signal = simu_pdf + noise
+
+        self.ax5.hist(self.beamline.distribution_fsm_h01[:,2]*1000, bins=16, density = True, histtype = 'step', label = "model")
+        self.ax5.scatter(self.beamline.distribution_fsm_h01[:,2]*1000, vertical_gaussian_fit, s=0.5, label = "gaussian fit")
+        self.ax5.bar(x_fsm, fsm_signal, width = 0.125, fill = False, label = "Measured with noise")
         self.ax5.set_xlabel("Y(mm)")
         self.ax5.set_xlim(-16,16)
         self.ax5.set_title("H01-FSM-001")
+        self.ax5.legend()
 
         self.ax4.scatter(self.beamline.distribution_opt_h01[:,0]*1000, self.beamline.distribution_opt_h01[:,2]*1000, color = 'purple', s=0.5)
         self.ax4.set_xlabel("X(mm)")

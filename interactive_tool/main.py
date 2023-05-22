@@ -18,34 +18,26 @@ import optics_utils.transfer_matrices as opu
 from dashboard.dashboard import MainWindow
 
 lattice_file = "lattice_example/optics_71.7_MeV_full_HEBT.twiss"
-#lattice_file1 = "lattice_example/optics_71.7_MeV.twiss"
-#df_optics = mxu.get_twiss(lattice_file)
-#df_optics1 = mxu.get_twiss(lattice_file1)
-
-#plt.plot(df_optics["S"], df_optics["SIGMA_X"])
-#plt.plot(df_optics1["S"], df_optics1["SIGMA_X"])
-#plt.show()
 input_distribution = "distribution_example/CCL_Output_71.7.dat"
 
 # test with the sequence file
 ## create the beam line
 bl_with_input = seq.Beamline(lattice_file, input_distribution)
 
-# change quadrupole strength
-## before
-#print(bl_with_input.main_dataframe_sequence[bl_with_input.main_dataframe_sequence["KEYWORD"]=="QUADRUPOLE"])
+# Test to see if the strength of quadrupole are ok.
+## passed
+#print(bl_with_input.get_quadrupole_dataframe()[["NAME", "K1"]])
+bl_with_input.get_quadrupole_dataframe()
+#print(bl_with_input.quadrupole_df.iloc[0]["K1"])
 
-##after
-#list_quad = ["H01_EMQ_01", "H01_EMQ_02", "H01_EMQ_03"]
-#k1 = [1.5, -8.5, 5.0]
-#bl_with_input.update_magnet_parameter("QUADRUPOLE", list_quad, "K1L", k1)
 #print(bl_with_input.dataframe_madx_sequence[bl_with_input.dataframe_madx_sequence["KEYWORD"]=="QUADRUPOLE"]["K1L"]/0.14)
 
-#------ Dashboard ----------
-#app = QtWidgets.QApplication(sys.argv)
-#window = QtWidgets.QWidget()
 
-#window = MainWindow(bl_with_input)
+#------ Dashboard ----------
+app = QtWidgets.QApplication(sys.argv)
+window = QtWidgets.QWidget()
+
+window = MainWindow(bl_with_input)
 #
-#window.show()
-#app.exec_()
+window.show()
+app.exec_()

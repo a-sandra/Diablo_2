@@ -28,6 +28,7 @@ class Beamline(object):
         self.sbend_list = []
         self.steerer_list = []
         self.non_magnetic_element = []
+        self.quadrupole_df  = []
         self.input_file_distribution = input_beam
 
         # check if an input file is given.
@@ -82,7 +83,11 @@ class Beamline(object):
             # Building the transfer matrices as array as function of s.
             self.tm_as_function_s_array = np.asarray(self.build_beamline_transfer_matrix(), dtype=object)
             self.beam_distribution_at_every_element = self.cumulative_tracking()
-
+    
+    def get_quadrupole_dataframe(self):
+        self.quadrupole_df = self.main_dataframe_sequence[self.main_dataframe_sequence["KEYWORD"]=="QUADRUPOLE"]
+        return self.quadrupole_df
+    
     def build_beamline_transfer_matrix(self):
         # tm stands for transfer matrix
         tm_as_function_s_temp = np.zeros((len(self.main_dataframe_sequence), 5,5)) # from 2d to 4d to 5D dispersion
@@ -104,16 +109,12 @@ class Beamline(object):
             number_particle = len(my_beam.distribution["X(mm)"])
             my_beam.distribution.insert(6, "Dp/p", my_beam.dpp, True)
             temp_distro = 0.001*my_beam.distribution[["X(mm)", "XP(mrad)", "Y(mm)", "YP(mrad)"]]
-            print(temp_distro)
             temp_distro.insert(4, "Dp/p", my_beam.dpp, True)
-            print(temp_distro)
             my_distr = np.transpose(temp_distro.to_numpy())
 
             track_particle = np.zeros((len(self.main_dataframe_sequence), 5, number_particle))
             beam_size_along_s = np.zeros((len(self.dataframe_madx_sequence), 5)) # do not change 5
             track_particle[0] = self.tm_as_function_s_array[0].dot(my_distr)
-            #print(my_distr.shape, self.tm_as_function_s_array[0].shape)
-            #print(self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]))
             beam_size_along_s[0] = [self.main_dataframe_sequence["S"].iloc[0], np.std(my_distr[0]),np.std(my_distr[1]), np.std(my_distr[2]),np.std(my_distr[3])]
 
             for index in np.arange(0, len(self.main_dataframe_sequence)-1):
@@ -121,26 +122,17 @@ class Beamline(object):
                 beam_size_along_s[index+1] = [self.main_dataframe_sequence["S"].iloc[index+1]+ 0.5*self.main_dataframe_sequence["L"].iloc[index+1], np.std(track_particle[index+1][0]), np.std(track_particle[index+1][1]), 
                                               np.std(track_particle[index+1][2]), np.std(track_particle[index+1][3]) ]
             self.df_beam_size_along_s = pd.DataFrame(beam_size_along_s, columns=["S", "X", "XP", "Y", "YP"])
-            #self.distribution_fsm_h01 = np.transpose(np.array(track_particle[self.index_fsm_dataframe]))
-            #self.distribution_opt_h01 = np.transpose(np.array(track_particle[self.index_opt_dataframe]))
-            #print(np.transpose(self.distribution_fsm_h01)[:,0])
+            self.distribution_fsm_h01 = np.transpose(np.array(track_particle[self.index_fsm_dataframe]))
+            self.distribution_opt_h01 = np.transpose(np.array(track_particle[self.index_opt_dataframe]))
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["X"], "--o",label="x tracking")
             plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_X"], "--o",label = "x madx")
 
             plt.plot(self.df_beam_size_along_s["S"], self.df_beam_size_along_s["Y"], "--o",label="y tracking")
             plt.plot(self.dataframe_madx_sequence["S"], self.dataframe_madx_sequence["SIGMA_Y"], "--o",label = "y madx")
-            #plt.hist(my_beam.dpp)
             plt.legend()
             plt.show()
-
-            #print(np.std(my_beam.distribution["X(mm)"]))
-            #print(self.dataframe_madx_sequence[:-5])
-            #print(self.df_beam_size_along_s)
-            #print(beam_size_along_s)
-            #print(len(track_particle))
-            #return track_particle
-    
+ 
     def check_element_type(self, element):
         if element["KEYWORD"]=="QUADRUPOLE":
             #print(element["NAME"] +" "+ element["KEYWORD"]+", this element is a quad") 
@@ -163,7 +155,7 @@ class Beamline(object):
             sbend = Dipole(self, element["L"], 0.785398, element["NAME"])
             self.sbend_list.append(sbend)
             rho = element["L"]/0.785398
-            print(rho)
+            #print(rho)
             self.data.append([element["NAME"], element["KEYWORD"], element["S"], element["L"], element["K1L"],  opu.sector_dipole( element["L"], rho)])
 
         elif element["KEYWORD"]=="DRIFT":
@@ -213,7 +205,6 @@ class Beamline(object):
         self.df_bpm = self.dataframe_madx_sequence[self.dataframe_madx_sequence["NAME"].str.contains(r"BPM")] #BPM
         self.df_bend = self.dataframe_madx_sequence[self.dataframe_madx_sequence["KEYWORD"].str.contains(r"RBEND")] # 
         self.df_fsm = self.dataframe_madx_sequence[self.dataframe_madx_sequence["NAME"].str.contains(r"FSM")]
-
 
     def apertureplot(self):
         s = self.dataframe_madx_sequence["S"]-self.dataframe_madx_sequence["L"]/2
@@ -294,7 +285,7 @@ class Beamline(object):
         ax4.set_xlim(0,6)
         ax4.set_ylim(-20,20)
         ax4.set_ylabel("Vertical (mm)")
-        plt.show()
+        #plt.show()
         return fi,ax1,ax2,ax3,ax4
 
 class Quadrupole(object):
